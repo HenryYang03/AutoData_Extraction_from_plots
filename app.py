@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 import os
 import cv2
@@ -8,6 +8,7 @@ from bar_graph_analyzer import BarGraphAnalyzer
 
 # Initialize Flask application
 app = Flask(__name__)
+app.secret_key = "b'\xca\xa4\xf2\x80!\xfe\x85\xba\xd7\xcf\xe7\xc9\xf1)I\xac\x10Y5M\x95\xed\xfb\xc4'"
 app.config['UPLOAD_FOLDER'] = 'static/uploads/'
 
 # Load the YOLO model and class names
@@ -42,20 +43,34 @@ def draw_detections(image_path, detections):
 def index():
     return render_template('index.html')
 
-@app.route('/bar_analyzer', methods=['GET', 'POST'])
+
+@app.route('/bar_analyzer', methods = ['GET', 'POST'])
 def bar_analyzer():
     if request.method == 'POST':
         if 'file' not in request.files:
+            flash('No file part')
             return redirect(request.url)
+
         file = request.files['file']
         if file.filename == '':
+            flash('No selected file')
             return redirect(request.url)
-        if file and allowed_file(file.filename):
-            filepath, filename = save_file(file)
-            bar_graph_heights = analyze_image(filepath)
-            detections = analyzer.model(filepath).xyxy[0].numpy()
-            detection_image_path = draw_detections(filepath, detections)
-            return render_template('bar_analyzer.html', filename=filename, results=bar_graph_heights, detection_image_path=detection_image_path)
+
+        if file:
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+
+            try:
+                bar_graph_heights = analyzer.analyze_image(filepath)
+                detections = analyzer.model(filepath).xyxy[0].numpy()
+                detection_image_path = draw_detections(filepath, detections)
+                return render_template('bar_analyzer.html', filename = filename,
+                                       results = bar_graph_heights, detection_image_path = detection_image_path)
+            except ValueError as e:
+                flash(str(e))
+                return redirect(request.url)
+
     return render_template('bar_analyzer.html')
 
 @app.route('/box_analyzer')
