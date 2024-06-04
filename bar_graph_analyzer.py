@@ -95,3 +95,45 @@ class BarGraphAnalyzer:
             cropped_image = cv2.rotate(cropped_image, cv2.ROTATE_90_CLOCKWISE)
         text = pytesseract.image_to_string(cropped_image, config='--psm 6')
         return text.strip()
+
+    def calculate_heights(self, bar_groups, image):
+        results = {}
+        for label, (group_bars, yaxis, xaxis, origin, ymax) in bar_groups.items():
+            sorted_bars = sorted(group_bars, key=lambda bar: bar[0])
+
+            origin_value = self.extract_text_from_image(image, origin)
+            ymax_value = self.extract_text_from_image(image, ymax)
+
+            try:
+                origin_value = float(origin_value)
+                ymax_value = float(ymax_value)
+            except ValueError:
+                raise ValueError("Can't convert the orgin and ymax to number")
+
+            yaxis_height = yaxis[1] - yaxis[3]
+            scale_factor = (ymax_value - origin_value) / yaxis_height
+
+            heights = []
+            for bar in sorted_bars:
+                bar_ymax = bar[1]# y-coordinate of the top of the bar
+                bar_ymin = bar[3]
+                #yaxis[3]
+                height = (bar_ymax - bar_ymin) * scale_factor  # Calculate the true height
+                heights.append(height)
+
+            results[label] = {
+                "heights": heights,
+                "origin_value": origin_value,
+                "ymax_value": ymax_value,
+            }
+
+        return results
+
+if __name__ == "__main__":
+    model_path = 'models/test_model.pt'
+    class_names = ['label', 'ymax', 'origin', 'yaxis', 'bar', 'uptail', 'legend', 'legend_group', 'xaxis', 'x_group']
+    analyzer = BarGraphAnalyzer(model_path, class_names, pytesseract_cmd='/opt/homebrew/bin/tesseract')
+
+    image_path = '/Users/mohanyang/Desktop/new.png'
+    bar_graph_heights = analyzer.analyze_image(image_path)
+    print("Relative heights of the bars for each bar graph:", bar_graph_heights)
