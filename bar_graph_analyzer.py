@@ -56,3 +56,42 @@ class BarGraphAnalyzer:
                 bar_groups[label_text] = (group_bars, yaxis, corresponding_xaxis, corresponding_origin, corresponding_ymax)
 
         return bar_groups
+
+    def find_closest_xaxis(self, yaxis_mid_x, xaxes):
+        min_distance = float('inf')
+        corresponding_xaxis = None
+        for xaxis in xaxes:
+            xaxis_mid_x = (xaxis[0] + xaxis[2]) / 2
+            distance = abs(yaxis_mid_x - xaxis_mid_x)
+            if distance < min_distance:
+                min_distance = distance
+                corresponding_xaxis = xaxis
+        return corresponding_xaxis
+
+    def find_closest_label(self, yaxis_mid_x, labels):
+        min_distance = float('inf')
+        corresponding_label = None
+        for label in labels:
+            label_mid_x = (label[0] + label[2]) / 2
+            distance = abs(yaxis_mid_x - label_mid_x)
+            if distance < min_distance:
+                min_distance = distance
+                corresponding_label = label
+        return corresponding_label
+
+    def find_group_bars(self, yaxis, xaxis, bars):
+        group_bars = []
+        for bar in bars:
+            bar_mid_x = (bar[0] + bar[2]) / 2
+            bar_mid_y = (bar[1] + bar[3]) / 2
+            if yaxis[1] <= bar_mid_y <= yaxis[3] and xaxis[0] <= bar_mid_x <= xaxis[2]:
+                group_bars.append(bar)
+        return group_bars
+
+    def extract_text_from_image(self, image, bbox, rotate=False):
+        x1, y1, x2, y2 = map(int, bbox[:4])
+        cropped_image = image[y1:y2, x1:x2]
+        if rotate:
+            cropped_image = cv2.rotate(cropped_image, cv2.ROTATE_90_CLOCKWISE)
+        text = pytesseract.image_to_string(cropped_image, config='--psm 6')
+        return text.strip()
