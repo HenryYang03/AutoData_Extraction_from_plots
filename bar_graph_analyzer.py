@@ -26,3 +26,33 @@ class BarGraphAnalyzer:
         results = self.calculate_heights(bar_groups, image)
 
         return results
+
+    def filter_detections(self, detections):
+        bars = [d for d in detections if self.class_names[int(d[5])] == 'bar']
+        yaxes = [d for d in detections if self.class_names[int(d[5])] == 'yaxis']
+        xaxes = [d for d in detections if self.class_names[int(d[5])] == 'xaxis']
+        origins = [d for d in detections if self.class_names[int(d[5])] == 'origin']
+        ymaxes = [d for d in detections if self.class_names[int(d[5])] == 'ymax']
+        labels = [d for d in detections if self.class_names[int(d[5])] == 'label']
+        return bars, yaxes, xaxes, origins, ymaxes, labels
+
+    def group_bars(self, detections, image):
+        bars, yaxes, xaxes, origins, ymaxes, labels = self.filter_detections(detections)
+
+        if not yaxes or not xaxes:
+            raise ValueError("No y-axis or x-axis detected in the image.")
+
+        bar_groups = {}
+        for yaxis in yaxes:
+            yaxis_mid_x = (yaxis[0] + yaxis[2]) / 2
+            corresponding_xaxis = self.find_closest_xaxis(yaxis_mid_x, xaxes)
+            corresponding_origin = self.find_closest_label(yaxis_mid_x, origins)
+            corresponding_ymax = self.find_closest_label(yaxis_mid_x, ymaxes)
+            corresponding_label = self.find_closest_label(yaxis_mid_x, labels)
+
+            if corresponding_xaxis is not None and corresponding_origin is not None and corresponding_ymax is not None and corresponding_label is not None:
+                label_text = self.extract_text_from_image(image, corresponding_label, rotate=True)
+                group_bars = self.find_group_bars(yaxis, corresponding_xaxis, bars)
+                bar_groups[label_text] = (group_bars, yaxis, corresponding_xaxis, corresponding_origin, corresponding_ymax)
+
+        return bar_groups
