@@ -42,20 +42,25 @@ def draw_detections(image_path, detections):
 def index():
     return render_template('index.html')
 
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return redirect(request.url)
-    file = request.files['file']
-    if file.filename == '':
-        return redirect(request.url)
-    if file and allowed_file(file.filename):
-        filepath, filename = save_file(file)
-        bar_graph_heights = analyze_image(filepath)
-        detections = analyzer.model(filepath).xyxy[0].numpy()  # Extract detections
-        detection_image_path = draw_detections(filepath, detections)
-        return render_template('index.html', filename=filename, results=bar_graph_heights, detection_image_path=detection_image_path)
-    return redirect(url_for('index'))
+@app.route('/bar_analyzer', methods=['GET', 'POST'])
+def bar_analyzer():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return redirect(request.url)
+        file = request.files['file']
+        if file.filename == '':
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filepath, filename = save_file(file)
+            bar_graph_heights = analyze_image(filepath)
+            detections = analyzer.model(filepath).xyxy[0].numpy()
+            detection_image_path = draw_detections(filepath, detections)
+            return render_template('bar_analyzer.html', filename=filename, results=bar_graph_heights, detection_image_path=detection_image_path)
+    return render_template('bar_analyzer.html')
+
+@app.route('/box_analyzer')
+def box_analyzer():
+    return render_template('box_analyzer.html')
 
 if __name__ == "__main__":
     app.run(debug=True)

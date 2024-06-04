@@ -11,6 +11,7 @@ fsspec==2024.5.0
 gitdb==4.0.11
 GitPython==3.1.43
 idna==3.7
+imutils==0.5.4
 itsdangerous==2.2.0
 Jinja2==3.1.4
 kiwisolver==1.4.5
@@ -34,7 +35,6 @@ PyYAML==6.0.1
 requests==2.32.3
 scipy==1.13.1
 seaborn==0.13.2
-setuptools==70.0.0
 six==1.16.0
 smmap==5.0.1
 sympy==1.12.1
@@ -48,4 +48,3 @@ ultralytics==8.2.25
 urllib3==2.2.1
 utils==1.0.2
 Werkzeug==3.0.3
-wheel==0.43.0
