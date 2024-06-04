@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Bar Analyzer{% endblock %}
+
+{% block content %}
+    <h1>Bar Analyzer</h1>
+    <p>Upload a bar graph image to analyze the heights of the bars.</p>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-danger" role="alert">
+          {{ messages[0] }}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <form action="{{ url_for('bar_analyzer') }}" method="post" enctype="multipart/form-data" class="form-group">
+        <div class="custom-file mb-3">
+            <input type="file" class="custom-file-input" id="fileInput" name="file" required>
+            <label class="custom-file-label" for="fileInput">Choose file</label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-upload"></i> Upload</button>
+    </form>
+
+    {% if filename %}
+    <div class="card mt-3">
+        <div class="card-header">
+            Uploaded Image
+        </div>
+        <div class="card-body">
+            <img src="{{ url_for('static', filename='uploads/' ~ filename) }}" alt="Uploaded Image" class="img-fluid">
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            Bar Heights
+        </div>
+        <div class="card-body">
+            {% for label, details in results.items() %}
+                <p>{{ label }}:
+                    {% for height in details.heights %}
+                        Bar {{ loop.index }}: {{ height }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </p>
+                <p>Ymin: {{ details.ymax_value }}, Origin: {{ details.origin_value }}</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            Detected Objects
+        </div>
+        <div class="card-body">
+            <img src="{{ url_for('static', filename='uploads/' ~ detection_image_path.split('/')[-1]) }}" alt="Detected Objects" class="img-fluid">
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('.custom-file-input').addEventListener('change', function (e) {
+                var fileName = document.getElementById("fileInput").files[0].name;
+                var nextSibling = e.target.nextElementSibling;
+                console.log("File selected: ", fileName);  // Debugging line
+                nextSibling.innerText = fileName;
+            });
+
+            document.querySelector('form').addEventListener('submit', function() {
+                document.getElementById('loadingSpinner').style.display = 'block';
+            });
+        });
+    </script>
+{% endblock %}
