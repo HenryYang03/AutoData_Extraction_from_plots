@@ -1,6 +1,8 @@
 import cv2
 import torch
 import pytesseract
+import imutils
+import re
 
 class BarGraphAnalyzer:
     def __init__(self, model_path, class_names, pytesseract_cmd = None):
@@ -51,7 +53,7 @@ class BarGraphAnalyzer:
             corresponding_label = self.find_closest_label(yaxis_mid_x, labels)
 
             if corresponding_xaxis is not None and corresponding_origin is not None and corresponding_ymax is not None and corresponding_label is not None:
-                label_text = self.extract_text_from_image(image, corresponding_label, rotate=True)
+                label_text = self.extract_text(image, corresponding_label, rotate=True)
                 group_bars = self.find_group_bars(yaxis, corresponding_xaxis, bars)
                 bar_groups[label_text] = (group_bars, yaxis, corresponding_xaxis, corresponding_origin, corresponding_ymax)
 
@@ -88,21 +90,48 @@ class BarGraphAnalyzer:
                 group_bars.append(bar)
         return group_bars
 
-    def extract_text_from_image(self, image, bbox, rotate=False):
+    def preprocess_image(self, image, bbox, for_numbers=False):
         x1, y1, x2, y2 = map(int, bbox[:4])
         cropped_image = image[y1:y2, x1:x2]
+        gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
+        resized_image = imutils.resize(gray_image, width=300)
+        _, binary_image = cv2.threshold(resized_image, 150, 255, cv2.THRESH_BINARY_INV)
+
+        if for_numbers:
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+            morph_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel)
+            inverted_image = 255 - morph_image
+            blurred_image = cv2.GaussianBlur(inverted_image, (5, 5), 0)
+            return blurred_image
+        return binary_image
+
+    def extract_text(self, image, bbox, rotate = False):
+        preprocessed_image = self.preprocess_image(image, bbox)
         if rotate:
-            cropped_image = cv2.rotate(cropped_image, cv2.ROTATE_90_CLOCKWISE)
-        text = pytesseract.image_to_string(cropped_image, config='--psm 6')
+            preprocessed_image = cv2.rotate(preprocessed_image, cv2.ROTATE_90_CLOCKWISE)
+
+        config = r'--oem 3 --psm 6'
+        text = pytesseract.image_to_string(preprocessed_image, config = config)
         return text.strip()
+
+    def extract_numbers(self, image, bbox, rotate = False):
+        preprocessed_image = self.preprocess_image(image, bbox, for_numbers = True)
+        if rotate:
+            preprocessed_image = cv2.rotate(preprocessed_image, cv2.ROTATE_90_CLOCKWISE)
+
+        custom_config = r'--oem 3 --psm 10 -c tessedit_char_whitelist=0123456789.'
+        text = pytesseract.image_to_string(preprocessed_image, config = custom_config)
+
+        numbers = re.findall(r'\d+\.\d+|\d+', text)
+        return numbers[0] if numbers else ''
 
     def calculate_heights(self, bar_groups, image):
         results = {}
         for label, (group_bars, yaxis, xaxis, origin, ymax) in bar_groups.items():
             sorted_bars = sorted(group_bars, key=lambda bar: bar[0])
 
-            origin_value = self.extract_text_from_image(image, origin)
-            ymax_value = self.extract_text_from_image(image, ymax)
+            origin_value = self.extract_numbers(image, origin)
+            ymax_value = self.extract_numbers(image, ymax)
 
             try:
                 origin_value = float(origin_value)
