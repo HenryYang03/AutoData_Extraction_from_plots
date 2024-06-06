@@ -2,7 +2,7 @@ Flask==3.0.3
 Jinja2==3.1.4
 Werkzeug==3.0.3
 numpy==1.26.4
-opencv-python==4.9.0.80
+opencv-python-headless==4.5.5.64
 pytesseract==0.3.10
 pandas==2.2.2
 imutils==0.5.4
