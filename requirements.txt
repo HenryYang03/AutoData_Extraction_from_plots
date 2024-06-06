@@ -6,4 +6,4 @@ opencv-python-headless==4.5.5.64
 pytesseract==0.3.10
 pandas==2.2.2
 imutils==0.5.4
-torch-cpu
+torch-cpu==1.9.0+cpu
