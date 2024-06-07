@@ -39,6 +39,15 @@ def draw_detections(image_path, detections):
     cv2.imwrite(output_path, image)
     return output_path
 
+def clear_upload_folder():
+    for filename in os.listdir(app.config['UPLOAD_FOLDER']):
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            print(f'Failed to delete {file_path}. Reason: {e}')
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -59,6 +68,7 @@ def bar_analyzer():
         if file:
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            clear_upload_folder()
             file.save(filepath)
 
             try:
