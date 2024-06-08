@@ -6,6 +6,8 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    libtesseract-dev \
     gcc \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*

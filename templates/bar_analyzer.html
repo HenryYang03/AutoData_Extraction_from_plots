@@ -35,16 +35,29 @@
             Bar Heights
         </div>
         <div class="card-body">
-            {% for label, details in results.items() %}
-                <p>{{ label }}:
-                    {% for height in details.heights %}
-                        Bar {{ loop.index }}: {{ height }}{% if not loop.last %}, {% endif %}
-                    {% endfor %}
-                </p>
-                <p>Ymin: {{ details.ymax_value }}, Origin: {{ details.origin_value }}</p>
-            {% endfor %}
-        </div>
+        {% for label, details in results.items() %}
+            <div class="mb-3">
+                <h5>{{ label }}</h5>
+                <p><strong>Bar Heights:</strong></p>
+                {% for height in details.bar_heights %}
+                    <p>Bar {{ loop.index }}: {{ height }}</p>
+                {% endfor %}
+            </div>
+            <br>
+            <div class="mb-3">
+                <p><strong>Uptail Heights:</strong></p>
+                {% for height in details.uptail_heights %}
+                    <p>Uptail {{ loop.index }}: {{ height }}</p>
+                {% endfor %}
+            </div>
+            <br>
+            <div>
+                <p>Ymax: {{ details.ymax_value }}, Origin: {{ details.origin_value }}</p>
+            </div>
+            <hr>
+        {% endfor %}
     </div>
+</div>
 
     <div class="card mt-3">
         <div class="card-header">

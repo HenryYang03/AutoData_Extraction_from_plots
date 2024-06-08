@@ -36,10 +36,11 @@ class BarGraphAnalyzer:
         origins = [d for d in detections if self.class_names[int(d[5])] == 'origin']
         ymaxes = [d for d in detections if self.class_names[int(d[5])] == 'ymax']
         labels = [d for d in detections if self.class_names[int(d[5])] == 'label']
-        return bars, yaxes, xaxes, origins, ymaxes, labels
+        uptails = [d for d in detections if self.class_names[int(d[5])] == 'uptail']
+        return bars, yaxes, xaxes, origins, ymaxes, labels, uptails
 
     def group_bars(self, detections, image):
-        bars, yaxes, xaxes, origins, ymaxes, labels = self.filter_detections(detections)
+        bars, yaxes, xaxes, origins, ymaxes, labels, uptails = self.filter_detections(detections)
 
         if not yaxes or not xaxes:
             raise ValueError("No y-axis or x-axis detected in the image.")
@@ -55,7 +56,8 @@ class BarGraphAnalyzer:
             if corresponding_xaxis is not None and corresponding_origin is not None and corresponding_ymax is not None and corresponding_label is not None:
                 label_text = self.extract_text(image, corresponding_label, rotate=True)
                 group_bars = self.find_group_bars(yaxis, corresponding_xaxis, bars)
-                bar_groups[label_text] = (group_bars, yaxis, corresponding_xaxis, corresponding_origin, corresponding_ymax)
+                group_uptails = self.find_group_bars(yaxis, corresponding_xaxis, uptails)
+                bar_groups[label_text] = (group_bars, group_uptails, yaxis, corresponding_xaxis, corresponding_origin, corresponding_ymax)
 
         return bar_groups
 
@@ -127,8 +129,9 @@ class BarGraphAnalyzer:
 
     def calculate_heights(self, bar_groups, image):
         results = {}
-        for label, (group_bars, yaxis, xaxis, origin, ymax) in bar_groups.items():
+        for label, (group_bars, group_uptails, yaxis, xaxis, origin, ymax) in bar_groups.items():
             sorted_bars = sorted(group_bars, key=lambda bar: bar[0])
+            sorted_uptails = sorted(group_uptails, key=lambda uptail: uptail[0])
 
             origin_value = self.extract_numbers(image, origin)
             ymax_value = self.extract_numbers(image, ymax)
@@ -142,16 +145,24 @@ class BarGraphAnalyzer:
             yaxis_height = yaxis[1] - yaxis[3]
             scale_factor = (ymax_value - origin_value) / yaxis_height
 
-            heights = []
+            bar_heights = []
             for bar in sorted_bars:
                 bar_ymax = bar[1]# y-coordinate of the top of the bar
                 bar_ymin = bar[3]
                 #yaxis[3]
                 height = (bar_ymax - bar_ymin) * scale_factor  # Calculate the true height
-                heights.append(height)
+                bar_heights.append(height)
+
+            uptail_heights = []
+            for uptail in sorted_uptails:
+                uptail_ymax = uptail[1]
+                uptail_ymin = uptail[3]
+                height = (uptail_ymax - uptail_ymin) * scale_factor
+                uptail_heights.append(height)
 
             results[label] = {
-                "heights": heights,
+                "bar_heights": bar_heights,
+                "uptail_heights": uptail_heights,
                 "origin_value": origin_value,
                 "ymax_value": ymax_value,
             }
