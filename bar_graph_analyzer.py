@@ -150,7 +150,7 @@ class BarGraphAnalyzer:
                 bar_ymax = bar[1]# y-coordinate of the top of the bar
                 bar_ymin = bar[3]
                 #yaxis[3]
-                height = (bar_ymax - bar_ymin) * scale_factor  # Calculate the true height
+                height = (bar_ymax - bar_ymin) * scale_factor + origin_value  # Calculate the true height
                 bar_heights.append(height)
 
             uptail_heights = []

@@ -12,7 +12,7 @@ app.secret_key = "b'\xca\xa4\xf2\x80!\xfe\x85\xba\xd7\xcf\xe7\xc9\xf1)I\xac\x10Y
 app.config['UPLOAD_FOLDER'] = 'static/uploads/'
 
 # Load the YOLO model and class names
-model_path = 'models/test_model.pt'
+model_path = 'models/best.pt'
 class_names = ['label', 'ymax', 'origin', 'yaxis', 'bar', 'uptail', 'legend', 'legend_group', 'xaxis', 'x_group']
 analyzer = BarGraphAnalyzer(model_path, class_names, pytesseract_cmd='tesseract')
 
