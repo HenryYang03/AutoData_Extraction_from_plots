@@ -10,6 +10,10 @@ RUN apt-get update && apt-get install -y \
     libtesseract-dev \
     gcc \
     python3-dev \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the container
@@ -18,9 +22,8 @@ COPY requirements.txt .
 # Show the contents of the requirements file for debugging
 RUN cat requirements.txt
 
-# Install the dependencies
-RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y  \
-    && pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code into the container
 COPY . .
@@ -33,4 +36,4 @@ ENV FLASK_RUN_HOST=0.0.0.0
 EXPOSE 5000
 
 # Command to run the application
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]

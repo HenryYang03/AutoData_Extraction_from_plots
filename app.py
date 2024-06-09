@@ -2,8 +2,6 @@ from flask import Flask, request, render_template, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 import os
 import cv2
-from PIL import Image
-import torch
 from bar_graph_analyzer import BarGraphAnalyzer
 
 # Initialize Flask application
@@ -88,4 +86,4 @@ def box_analyzer():
     return render_template('box_analyzer.html')
 
 if __name__ == "__main__":
-    app.run(host = "0.0.0.0", port = 9000, debug=True)
+    app.run(host = "0.0.0.0", port = 5000, debug=True)

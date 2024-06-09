@@ -170,7 +170,7 @@ class BarGraphAnalyzer:
         return results
 
 if __name__ == "__main__":
-    model_path = 'models/test_model.pt'
+    model_path = 'models/best.pt'
     class_names = ['label', 'ymax', 'origin', 'yaxis', 'bar', 'uptail', 'legend', 'legend_group', 'xaxis', 'x_group']
     analyzer = BarGraphAnalyzer(model_path, class_names, pytesseract_cmd='/opt/homebrew/bin/tesseract')
 
