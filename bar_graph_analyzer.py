@@ -92,11 +92,16 @@ class BarGraphAnalyzer:
                 group_bars.append(bar)
         return group_bars
 
-    def preprocess_image(self, image, bbox, for_numbers=False):
+    def preprocess_image(self, image, bbox, for_numbers=False, padding = 10):
         x1, y1, x2, y2 = map(int, bbox[:4])
+        height, width = image.shape[:2]
+        x1 = max(0, x1 - padding)
+        y1 = max(0, y1 - padding)
+        x2 = min(width, x2 + padding)
+        y2 = min(height, y2 + padding)
         cropped_image = image[y1:y2, x1:x2]
         gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
-        resized_image = imutils.resize(gray_image, width=300)
+        resized_image = imutils.resize(gray_image, width=500)
         _, binary_image = cv2.threshold(resized_image, 150, 255, cv2.THRESH_BINARY_INV)
 
         if for_numbers:
@@ -121,7 +126,7 @@ class BarGraphAnalyzer:
         if rotate:
             preprocessed_image = cv2.rotate(preprocessed_image, cv2.ROTATE_90_CLOCKWISE)
 
-        custom_config = r'--oem 3 --psm 10 -c tessedit_char_whitelist=0123456789.'
+        custom_config = r'--oem 1 --psm 8 -c tessedit_char_whitelist=0123456789.'
         text = pytesseract.image_to_string(preprocessed_image, config = custom_config)
 
         numbers = re.findall(r'\d+\.\d+|\d+', text)
