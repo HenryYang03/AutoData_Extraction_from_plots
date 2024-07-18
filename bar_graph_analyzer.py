@@ -92,7 +92,7 @@ class BarGraphAnalyzer:
                 group_bars.append(bar)
         return group_bars
 
-    def preprocess_image(self, image, bbox, for_numbers=False, padding = 10):
+    def preprocess_image(self, image, bbox, for_numbers = False, padding = 4, save_images = False):
         x1, y1, x2, y2 = map(int, bbox[:4])
         height, width = image.shape[:2]
         x1 = max(0, x1 - padding)
@@ -100,16 +100,22 @@ class BarGraphAnalyzer:
         x2 = min(width, x2 + padding)
         y2 = min(height, y2 + padding)
         cropped_image = image[y1:y2, x1:x2]
+
         gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
         resized_image = imutils.resize(gray_image, width=500)
-        _, binary_image = cv2.threshold(resized_image, 150, 255, cv2.THRESH_BINARY_INV)
+
+        _, binary_image = cv2.threshold(resized_image, 175, 255, cv2.THRESH_BINARY_INV)
 
         if for_numbers:
             kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
             morph_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel)
             inverted_image = 255 - morph_image
             blurred_image = cv2.GaussianBlur(inverted_image, (5, 5), 0)
+
+            if save_images:
+                cv2.imwrite('blurred_image.png', blurred_image)
             return blurred_image
+
         return binary_image
 
     def extract_text(self, image, bbox, rotate = False):
@@ -122,12 +128,13 @@ class BarGraphAnalyzer:
         return text.strip()
 
     def extract_numbers(self, image, bbox, rotate = False):
-        preprocessed_image = self.preprocess_image(image, bbox, for_numbers = True)
+        preprocessed_image = self.preprocess_image(image, bbox, for_numbers = True, save_images = True)
         if rotate:
             preprocessed_image = cv2.rotate(preprocessed_image, cv2.ROTATE_90_CLOCKWISE)
 
-        custom_config = r'--oem 1 --psm 8 -c tessedit_char_whitelist=0123456789.'
+        custom_config = r'--oem 3 --psm 13 -c tessedit_char_whitelist=0123456789.'
         text = pytesseract.image_to_string(preprocessed_image, config = custom_config)
+        print(text)
 
         numbers = re.findall(r'\d+\.\d+|\d+', text)
         return numbers[0] if numbers else ''
